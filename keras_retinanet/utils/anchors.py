@@ -36,7 +36,8 @@ class AnchorParameters:
         self.scales  = scales
 
     def num_anchors(self):
-        return len(self.ratios) * len(self.scales)
+        #return len(self.ratios) * len(self.scales)
+        return len(self.ratios)
 
 
 """
@@ -284,24 +285,34 @@ def generate_anchors(base_size=16, ratios=None, scales=None):
     if scales is None:
         scales = AnchorParameters.default.scales
 
-    num_anchors = len(ratios) * len(scales)
+    # num_anchors = len(ratios) * len(scales)
+    #
+    # # initialize output anchors
+    # anchors = np.zeros((num_anchors, 4))
+    #
+    # # scale base_size
+    # anchors[:, 2:] = base_size * np.tile(scales, (2, len(ratios))).T
+    #
+    # # compute areas of anchors
+    # areas = anchors[:, 2] * anchors[:, 3]
+    #
+    # # correct for ratios
+    # anchors[:, 2] = np.sqrt(areas / np.repeat(ratios, len(scales)))
+    # anchors[:, 3] = anchors[:, 2] * np.repeat(ratios, len(scales))
+    #
+    # # transform from (x_ctr, y_ctr, w, h) -> (x1, y1, x2, y2)
+    # anchors[:, 0::2] -= np.tile(anchors[:, 2] * 0.5, (2, 1)).T
+    # anchors[:, 1::2] -= np.tile(anchors[:, 3] * 0.5, (2, 1)).T
 
-    # initialize output anchors
-    anchors = np.zeros((num_anchors, 4))
-
-    # scale base_size
-    anchors[:, 2:] = base_size * np.tile(scales, (2, len(ratios))).T
-
-    # compute areas of anchors
-    areas = anchors[:, 2] * anchors[:, 3]
-
-    # correct for ratios
-    anchors[:, 2] = np.sqrt(areas / np.repeat(ratios, len(scales)))
-    anchors[:, 3] = anchors[:, 2] * np.repeat(ratios, len(scales))
-
-    # transform from (x_ctr, y_ctr, w, h) -> (x1, y1, x2, y2)
-    anchors[:, 0::2] -= np.tile(anchors[:, 2] * 0.5, (2, 1)).T
-    anchors[:, 1::2] -= np.tile(anchors[:, 3] * 0.5, (2, 1)).T
+    assert len(ratios) == len(scales)
+    scales = list(scales) if isinstance(scales, np.ndarray) else scales
+    ratios = list(ratios) if isinstance(ratios, np.ndarray) else ratios
+    xy_list = []
+    for height, ratios in zip(scales, ratios):
+        xy = np.array([ratios, 1]).T * height * 0.5
+        xy_list.append(xy)
+    xy = np.vstack(xy_list)
+    anchors = np.hstack([-xy, xy])
 
     return anchors
 

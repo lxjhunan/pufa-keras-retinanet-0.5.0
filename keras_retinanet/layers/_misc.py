@@ -48,7 +48,8 @@ class Anchors(keras.layers.Layer):
         elif isinstance(scales, list):
             self.scales  = np.array(scales)
 
-        self.num_anchors = len(ratios) * len(scales)
+        #self.num_anchors = len(ratios) * len(scales)
+        self.num_anchors = len(ratios)
         self.anchors     = keras.backend.variable(utils_anchors.generate_anchors(
             base_size=size,
             ratios=ratios,

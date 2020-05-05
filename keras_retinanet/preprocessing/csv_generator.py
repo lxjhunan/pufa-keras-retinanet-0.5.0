@@ -21,6 +21,7 @@ from ..utils.image import read_image_bgr
 import numpy as np
 from PIL import Image
 from six import raise_from
+from multiprocessing.pool import ThreadPool
 
 import csv
 import sys
@@ -155,9 +156,28 @@ class CSVGenerator(Generator):
                 self.image_data = _read_annotations(csv.reader(file, delimiter=','), self.classes)
         except ValueError as e:
             raise_from(ValueError('invalid CSV annotations file: {}: {}'.format(csv_data_file, e)), None)
+        #self.image_names = list(self.image_data.keys())
+
+        thread_pool = ThreadPool()
+        image_names_all = list(self.image_data)
+        image_names_dst = thread_pool.map(self.ckeck_file, image_names_all)
+        image_names_dif = np.setdiff1d(image_names_all, image_names_dst)
+        print('Number of invalid image files are: {}.'.format(len(image_names_dif)))
+        for invalid_image in image_names_dif:
+            self.image_data.pop(invalid_image)
         self.image_names = list(self.image_data.keys())
 
         super(CSVGenerator, self).__init__(**kwargs)
+
+    def check_file(self, image_name):
+        """Check the image file exists or not."""
+        try:
+            image_path = os.path.join(self.base_dir, image_name)
+            if os.path.exists(image_path):
+                return image_name
+        except Exception as err_msg:
+            print('Image file is invalid, {}.'.format(err_msg))
+            pass
 
     def size(self):
         """ Size of the dataset.

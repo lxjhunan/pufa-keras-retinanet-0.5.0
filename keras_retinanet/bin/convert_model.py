@@ -22,6 +22,7 @@ import sys
 
 import keras
 import tensorflow as tf
+import keras.backend as K
 
 # Allow relative imports when being executed as script.
 if __name__ == "__main__" and __package__ is None:
@@ -38,7 +39,7 @@ def get_session():
     """ Construct a modified tf session.
     """
     config = tf.ConfigProto()
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     return tf.Session(config=config)
 
 
@@ -79,6 +80,24 @@ def main(args=None):
 
     # convert the model
     model = models.convert_model(model, nms=args.nms, class_specific_filter=args.class_specific_filter, anchor_params=anchor_parameters)
+
+    model_in_path, model_in_name = os.path.split(args.model_in)
+    if args.model_out is None or os.path.isdir(args.model_out):
+        name, ext = os.path.splitext(model_in_name)
+        args.model_out = os.path.join(model_in_path, name + '_inference' + ext)
+    model_pb_name = os.path.splitext(model_in_name)[0] + '.pb'
+    print('The pb model will be saved in: {}.'.format(os.path.join(model_in_path, model_pb_name)))
+    session = K.get_session()
+    K.set_learning_phase(0)  # inference phase
+    boxes  = tf.add(model.output[0], 0, name='output_boxes')
+    scores = tf.add(model.output[1], 0, name='output_scores')
+    output_node_names = [boxes.op.name, scores.op.name]
+
+    constant_graph = tf.graph_util.convert_variables_to_constants(session,
+                                                                  session.graph.as_default_def(),
+                                                                  output_node_names)
+    # Save the inference pb model into file.
+    tf.train.write_graph(constant_graph, model_in_path, model_pb_name, as_text=False)
 
     # save model
     model.save(args.model_out)
