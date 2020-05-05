@@ -351,7 +351,7 @@ def bbox_transform(anchors, gt_boxes, mean=None, std=None):
     return targets
 
 
-def compute_overlab(a, b):
+def compute_overlap(a, b):
     """Compute overlap between boxes and query boxes."""
     area = (b[:, 2] - b[:, 0]) * (b[:, 3] - b[:, 1])
 
