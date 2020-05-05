@@ -160,7 +160,7 @@ class CSVGenerator(Generator):
 
         thread_pool = ThreadPool()
         image_names_all = list(self.image_data)
-        image_names_dst = thread_pool.map(self.ckeck_file, image_names_all)
+        image_names_dst = thread_pool.map(self.check_file, image_names_all)
         image_names_dif = np.setdiff1d(image_names_all, image_names_dst)
         print('Number of invalid image files are: {}.'.format(len(image_names_dif)))
         for invalid_image in image_names_dif:
