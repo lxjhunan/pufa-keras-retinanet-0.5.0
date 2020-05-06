@@ -94,7 +94,7 @@ def main(args=None):
     output_node_names = [boxes.op.name, scores.op.name]
 
     constant_graph = tf.graph_util.convert_variables_to_constants(session,
-                                                                  session.graph.as_default_def(),
+                                                                  session.graph.as_graph_def(),
                                                                   output_node_names)
     # Save the inference pb model into file.
     tf.train.write_graph(constant_graph, model_in_path, model_pb_name, as_text=False)
